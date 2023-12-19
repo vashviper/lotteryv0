@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lottery Smart Contract</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.3.0/dist/web3.min.js"></script>
-    <script>const contractAddress = "0x065e2A50434B1c360CAE4a5616A93C647Df4AD0F";
-const abi = [
+    <script>
+        const contractAddress = "0x065e2A50434B1c360CAE4a5616A93C647Df4AD0F";
+        const abi = [
 	{
 		"inputs": [],
 		"name": "enter",
@@ -71,55 +72,78 @@ const abi = [
 		"stateMutability": "view",
 		"type": "function"
 	}
-];
- 
-let contract;
-let web3;
-let accounts;
- 
-window.addEventListener('load', async () => {
-    if(window.ethereum) {
-        web3 = new Web3(window.ethereum);
-        try {
-            await window.ethereum.enable();
-            initApp();
-        } catch (error) {
-            console.error("Access to your Ethereum account rejected.");
+	];
+
+        let contract;
+        let web3;
+        let accounts;
+
+        window.addEventListener('load', async () => {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.enable();
+                    initApp();
+                } catch (error) {
+                    console.error("Access to your Ethereum account rejected.");
+                }
+            } else {
+                console.error("Please install MetaMask!");
+            }
+        });
+
+        async function initApp() {
+            try {
+                contract = new web3.eth.Contract(abi, contractAddress);
+
+                document.getElementById('connectWallet').addEventListener('click', async () => {
+                    accounts = await web3.eth.getAccounts();
+                    console.log("Connected account:", accounts[0]);
+                });
+
+                document.getElementById('enterLottery').addEventListener('click', () => {
+                    contract.methods.enter().send({ from: accounts[0], value: web3.utils.toWei("0.01", "ether") })
+                        .then(() => console.log("Entered the lottery!"))
+                        .catch(error => console.error("Error entering the lottery:", error));
+                });
+
+                document.getElementById('pickWinner').addEventListener('click', async () => {
+                    try {
+                        const manager = await contract.methods.manager().call();
+                        if (accounts[0] === manager) {
+                            contract.methods.pickWinner().send({ from: accounts[0] })
+                                .on('transactionHash', hash => console.log("Transaction hash:", hash))
+                                .on('confirmation', (confirmationNumber, receipt) => {
+                                    if (confirmationNumber >= 1) {
+                                        if (receipt.status) {
+                                            console.log("Winner picked!");
+                                        } else {
+                                            console.error("Transaction failed:", receipt);
+                                        }
+                                    }
+                                })
+                                .on('error', error => console.error("Error picking winner:", error));
+                        } else {
+                            console.error("Only the manager can pick the winner.");
+                        }
+                    } catch (error) {
+                        console.error("Error checking manager:", error);
+                    }
+                });
+
+                // Fetch and display participants
+                contract.methods.getParticipants().call()
+                    .then(displayParticipants)
+                    .catch(error => console.error("Error fetching participants:", error));
+            } catch (error) {
+                console.error("Error initializing the app:", error);
+            }
         }
-    } else {
-        console.error("Please install MetaMask!");
-    }
-});
- 
-function initApp() {
-    contract = new web3.eth.Contract(abi, contractAddress);
- 
-    document.getElementById('connectWallet').addEventListener('click', async () => {
-        accounts = await web3.eth.getAccounts();
-        console.log("Connected account:", accounts[0]);
-    });
- 
-    document.getElementById('enterLottery').addEventListener('click', () => {
-        contract.methods.enter().send({ from: accounts[0], value: web3.utils.toWei("0.01", "ether") })
-        .then(() => console.log("Entered the lottery!"))
-        .catch(console.error);
-    });
- 
-    document.getElementById('pickWinner').addEventListener('click', () => {
-        contract.methods.pickWinner().send({ from: accounts[0] })
-        .then(() => console.log("Winner picked!"))
-        .catch(console.error);
-    });
- 
-    // Fetch and display participants
-    contract.methods.getParticipants().call()
-    .then(displayParticipants)
-    .catch(console.error);
-}
- 
-function displayParticipants(participants) {
-    const participantsList = document.getElementById('participantsList');
-    participantsList.innerHTML = participants.map(address => `<li>${address}</li>`).join('');}
+
+        function displayParticipants(participants) {
+            const participantsList = document.getElementById('participantsList');
+            participantsList.innerHTML = participants.map(address => `<li>${address}</li>`).join('');
+        }
     </script>
 </head>
 <body>
@@ -138,7 +162,5 @@ function displayParticipants(participants) {
         <h2>Participants</h2>
         <ul id="participantsList"></ul>
     </div>
- 
-    <! --<script src="app.js"></script>  -->
 </body>
 </html>
