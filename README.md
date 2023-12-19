@@ -1,1 +1,1 @@
-# lotteryv1
+# lotteryv0
