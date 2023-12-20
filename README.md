@@ -1,4 +1,4 @@
-# Lottery Smart Contract README
+# Lottery Smart Contract 
 
 ## Overview
 This repository contains the code for a decentralized lottery smart contract deployed on a blockchain testnet. The smart contract is implemented in Solidity and was initially developed using Remix IDE. The front end is a simple HTML page hosted on GitHub Pages, interacting with the smart contract through the Web3.js library.
@@ -66,6 +66,11 @@ Follow these step-by-step instructions to interact with the lottery smart contra
    - Navigate to the "Settings" tab of your forked repository.
    - Scroll down to the "GitHub Pages" section and choose the `index.html` file as the source.
    - Update the `contractAddress` variable in the HTML file with the deployed smart contract address.
+   - Update the ABI by
+       -  copying the ABI from the deployed contract in Remix IDE under Compile tab.
+       -  Replace the existing ABI array with the one you copied from Remix IDE.
+         
+         const abi = [  // Paste the copied ABI here  // ...];
 
 3. **Access the Lottery Application**
    - Open the hosted HTML page on GitHub Pages.
